@@ -62,7 +62,9 @@ def unwind_and_size(src_rewrite_ctx, dest_rewrite_ctx):
             break
     dest_rewrite_ctx.stack_size = dest_stack_size
     dest_rewrite_ctx.pages.seek(dest_rewrite_ctx.stack_top_offset)
-    dest_rewrite_ctx.pages.write(b'\x00' * dest_stack_size)
+    src_rewrite_ctx.pages.seek(src_rewrite_ctx.stack_top_offset)
+    common_stack = src_rewrite_ctx.pages.read(dest_stack_size)
+    dest_rewrite_ctx.pages.write(common_stack)
 
 def _first_frame(call_site):
     return call_site.id == definitions.UINT64_MAX

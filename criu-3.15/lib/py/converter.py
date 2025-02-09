@@ -657,10 +657,10 @@ class Converter():  # TODO: Extend the logic for multiple PIDs
             unwind_and_size(self.src_rewrite_ctx, self.dest_rewrite_ctx)
             assert len(self.src_rewrite_ctx.activations) == \
                 len(self.dest_rewrite_ctx.activations), "act count unequal for src and dest"
-            for j in range(len(self.dest_rewrite_ctx.activations)):
-                self.src_rewrite_ctx.act = j
-                self.dest_rewrite_ctx.act = j
-                rewrite_frame(self.src_rewrite_ctx, self.dest_rewrite_ctx)
+            # for j in range(len(self.dest_rewrite_ctx.activations)):
+            #     self.src_rewrite_ctx.act = j
+            #     self.dest_rewrite_ctx.act = j
+            #     rewrite_frame(self.src_rewrite_ctx, self.dest_rewrite_ctx)
             self.dest_rewrite_ctx.pages.close()
             self.dest_rewrite_ctx.regset = self.dest_rewrite_ctx.activations[0].regset
             self.dest_rewrite_ctx.regset.copy_out(dest_core['entries'][0])
