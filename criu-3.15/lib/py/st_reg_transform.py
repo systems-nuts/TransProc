@@ -271,7 +271,11 @@ def _get_val(ctx, val, arch=False, return_loc = False):
                         raw_val.append(struct.unpack(
                             '<Q', ctx.pages.read(8))[0])
             else:
-                if val.size == 4:
+                if val.size == 1:
+                    raw_val = struct.unpack('<B', ctx.pages.read(1))[0]
+                elif val.size == 2:
+                    raw_val = struct.unpack('<H', ctx.pages.read(2))[0]
+                elif val.size == 4:
                     raw_val = struct.unpack('<I', ctx.pages.read(4))[0]
                 elif val.size == 8:
                     raw_val = struct.unpack('<Q', ctx.pages.read(8))[0]
@@ -403,7 +407,11 @@ def _put_val(dest_ctx, dest_val, raw_val, arch=False, return_loc = False, fixup_
                     for i in range(write_count):
                         write_val.append(struct.pack("Q", raw_val[i]))
             else:
-                if dest_val.size == 4:
+                if dest_val.size == 1:
+                    write_val.append(struct.pack("I", raw_val))
+                elif dest_val.size == 2:
+                    write_val.append(struct.pack("I", raw_val))
+                elif dest_val.size == 4:
                     write_val.append(struct.pack("I", raw_val))
                 elif dest_val.size == 8:
                     write_val.append(struct.pack("Q", raw_val))
