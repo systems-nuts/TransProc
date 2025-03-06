@@ -109,7 +109,7 @@ class ArchLiveValue:
         self.type = type
         self.size = size
         self.regnum = regnum
-        self.offset = offset
+        self.offset_or_const = offset
         self.operand_type = operand_type
         self.is_gen = is_gen
         self.inst_type = inst_type
