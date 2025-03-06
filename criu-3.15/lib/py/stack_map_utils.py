@@ -103,13 +103,13 @@ class LiveValue:
         print(string)
 
 class ArchLiveValue:
-    def __init__(self, is_ptr, bit_pad, type, size, regnum, offset, operand_type, is_gen, inst_type, operand_size, operand_regnum, operand_offset_or_constant):
+    def __init__(self, is_ptr, bit_pad, type, size, regnum, offset_or_const, operand_type, is_gen, inst_type, operand_size, operand_regnum, operand_offset_or_constant):
         self.is_ptr = is_ptr
         self.bit_pad = bit_pad
         self.type = type
         self.size = size
         self.regnum = regnum
-        self.offset = offset
+        self.offset_or_const = offset_or_const
         self.operand_type = operand_type
         self.is_gen = is_gen
         self.inst_type = inst_type
