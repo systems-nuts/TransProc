@@ -1,0 +1,4 @@
+
+BIN := cg
+
+include ../Makefile
