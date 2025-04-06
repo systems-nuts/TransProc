@@ -1,0 +1,4 @@
+
+BIN := is
+
+include ../Makefile
