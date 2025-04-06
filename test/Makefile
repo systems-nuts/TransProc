@@ -1,51 +1,95 @@
+.PHONY: all vdso clean get-from-x86 clean-img
 
-#FIXME Path to TranProc
-TRANPROC := /root/TranProc
+BIN ?= loop
+# Folder inside the TransProc repo
+LOCATION ?= test/$(BIN)
+BIN_DIR := $(CURDIR)/bin
+PYTHON := python3
 
-CRIU := $(TRANPROC)/criu-3.15/criu/criu
-CRIT := $(TRANPROC)/criu-3.15/crit/crit
+## QEMU configs
+QEMU_TRANSPROC_X86 ?= /home/ubuntu/TransProc
+QEMU_TRANSPROC_ARM ?= /home/ubuntu/TransProc
+QEMU_USER_X86 ?= ubuntu
+QEMU_USER_ARM ?= ubuntu
+QEMU_IP_X86 ?= 127.0.0.1
+QEMU_IP_ARM ?= 127.0.0.1
+QEMU_PORT_X86 ?= 5555
+QEMU_PORT_ARM ?= 5556
 
-PYTHON := $(shell which python3)
+## Tool configs
+TRANSPROC ?= /home/ubuntu/TransProc
+DEBUG ?= y
+ARM_TARGET := aarch64
+X86_TARGET := x86-64
 
-DEBUGGER := $(TRANPROC)/tools/debugger
+## Tools
+RM := rm -rf
+TRACER := $(TRANSPROC)/tools/tracer
+CRIU := $(TRANSPROC)/criu-3.15/criu/criu -vvv --shell-job
+CRIT := $(TRANSPROC)/criu-3.15/crit/crit
 
-TRACER := $(TRANPROC)/tools/tracer
+all:
+	make -C criu-3.15 -j$(shell nproc)
+	make -C tools
 
-CURR := $(shell pwd)
+vdso:
+	$(shell ./vdso/vdso.sh)
 
-BINDIR := $(CURR)/bin
-
-CP := cp
-
-ADDR := 0x501242
-PID := 1234
-TGT := aarch64
-BIN := test
-DEBUG := y
-
-spawn:
-	$(DEBUGGER) $(BIN) $(ADDR)
+## Targets to invoke the process, criu, and crit
 
 trace:
-	$(TRACER) $(PID)
+	sudo $(TRACER) $(shell pidof $(BIN))
 
 dump:
-	$(CRIU) dump -vvv --shell-job -o dump.log -t $(PID)
+	sudo $(CRIU) dump -o dump.log -t $(shell pidof $(BIN))
 
-transform:
-	$(PYTHON) $(CRIT) recode $(CURR) $(CURR)/$(TGT) $(TGT) $(BIN) $(BINDIR) $(DEBUG) 
+recode-x86:
+	$(PYTHON) $(CRIT) recode $(CURDIR) $(CURDIR)/$(ARM_TARGET) $(ARM_TARGET) $(BIN) $(BINDIR) $(DEBUG)
 
-shuffle:
-	$(PYTHON) $(CRIT) examine $(CURR) $(BIN) code > code.beforeshuffle
-	$(PYTHON) $(CRIT) examine $(CURR) $(BIN) stack > stack.beforeshuffle
-	$(PYTHON) $(CRIT) elf $(CURR) dump_sm $(BIN) > stackmap.beforeshuffle
-
-	$(PYTHON) $(CRIT) ss $(CURR) $(BIN)
-
-	$(PYTHON) $(CRIT) examine $(CURR) $(BIN) code > code.aftershuffle
-	$(PYTHON) $(CRIT) examine $(CURR) $(BIN) stack > stack.aftershuffle
-	$(PYTHON) $(CRIT) elf $(CURR) dump_sm $(BIN) > stackmap.aftershuffle	
+recode-arm:
+	$(PYTHON) $(CRIT) recode $(CURDIR) $(CURDIR)/$(X86_TARGET) $(X86_TARGET) $(BIN) $(BINDIR) $(DEBUG)
 
 restore:
-	chmod +x $(BIN)
-	$(CRIU) restore -vvv --shell-job -o restore.log
+	sudo $(CRIU) restore -o restore.log
+
+## Targets to get and copy images
+
+get-from-x86: clean-arm
+	scp -P $(QEMU_PORT_X86) -r $(QEMU_USER_X86)@$(QEMU_IP_X86):$(QEMU_TRANSPROC_X86)/$(LOCATION)/$(ARM_TARGET) .
+
+copy-to-arm:
+	scp -P $(QEMU_PORT_ARM) -r $(ARM_TARGET)/* $(QEMU_USER_ARM)@$(QEMU_IP_ARM):$(QEMU_TRANSPROC_ARM)/$(LOCATION)/
+
+get-from-arm: clean-x86
+	scp -P $(QEMU_PORT_ARM) -r $(QEMU_USER_ARM)@$(QEMU_IP_ARM):$(QEMU_TRANSPROC_ARM)/$(LOCATION)/$(X86_TARGET) .
+
+copy-to-x86:
+	scp -P $(QEMU_PORT_X86) -r $(X86_TARGET)/* $(QEMU_USER_X86)@$(QEMU_IP_X86):$(QEMU_TRANSPROC_X86)/$(LOCATION)/
+
+### The next three take the images without recoding, for debugging purposes
+
+get-from-x86-no-recode: clean-x86
+	mkdir $(X86_TARGET)
+	scp -P $(QEMU_PORT_X86) -r $(QEMU_USER_X86)@$(QEMU_IP_X86):$(QEMU_TRANSPROC_X86)/$(LOCATION)/*.img $(X86_TARGET)
+
+get-from-arm-no-recode: clean-arm
+	mkdir $(ARM_TARGET)
+	scp -P $(QEMU_PORT_ARM) -r $(QEMU_USER_ARM)@$(QEMU_IP_ARM):$(QEMU_TRANSPROC_ARM)/$(LOCATION)/*.img $(ARM_TARGET)
+
+copy-to-x86-no-recode:
+	scp -P $(QEMU_PORT_X86) -r $(ARM_TARGET)/* $(QEMU_USER_X86)@$(QEMU_IP_X86):$(QEMU_TRANSPROC_X86)/$(LOCATION)/
+
+### Clean targets
+
+clean-arm:
+	$(RM) $(ARM_TARGET)
+
+clean-x86:
+	$(RM) $(X86_TARGET)
+
+clean-img: clean-arm clean-x86
+	$(RM) *.img
+
+clean:
+	make -C criu-3.15 clean
+	make -C tools clean
