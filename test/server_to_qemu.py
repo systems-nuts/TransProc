@@ -2,6 +2,32 @@ import paramiko
 import os
 import argparse
 
+class TransportCommandExecutor:
+    def __init__(self, transport: paramiko.Transport):
+        self.transport = transport
+
+    def exec(self, command: str, timeout=None):
+        """
+        Execute a command over the transport and return (stdout, stderr, exit_status).
+        """
+        channel = self.transport.open_session()
+        if timeout:
+            channel.settimeout(timeout)
+
+        print('Executing command:', command)
+        channel.exec_command(command)
+
+        exit_status = channel.recv_exit_status()
+        stdout = channel.makefile('rb', -1).read().decode()
+        stderr = channel.makefile_stderr('rb', -1).read().decode()
+        print("Exit code:", exit_status)
+        print("STDOUT:\n", stdout)
+        print("STDERR:\n", stderr)
+
+        channel.close()
+        return stdout, stderr, exit_status
+
+
 def sftp_upload_dir(sftp, local_dir, remote_dir):
     """ Recursively upload a directory using SFTP. """
     try:
@@ -48,6 +74,9 @@ def main(first_server, second_server_port, remote_file_path, local_file_path, pa
         ssh2 = paramiko.Transport(transport)
         ssh2.connect(username=second_server_user, password=password)
 
+        # Create a command executor for the second server
+        executor = TransportCommandExecutor(ssh2)
+
         # Start SFTP session
         sftp = paramiko.SFTPClient.from_transport(ssh2)
 
@@ -56,6 +85,8 @@ def main(first_server, second_server_port, remote_file_path, local_file_path, pa
             # If it's a file, upload it directly
             sftp_upload_file(sftp, local_file_path, remote_file_path)
         elif os.path.isdir(local_file_path):
+            # If it's a directory, upload it recursively but remove the image files first
+            executor.exec(f"rm -f {remote_file_path}/*.img")
             sftp_upload_dir(sftp, local_file_path, remote_file_path)
         else:
             raise ValueError(f"Local path {local_file_path} is neither a file nor a directory.")
