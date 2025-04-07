@@ -1,10 +1,14 @@
-.PHONY: all vdso clean get-from-x86 clean-img
+.PHONY: all vdso clean get-from-x86 get-from-arm clean-img
 
 BIN ?= loop
 # Folder inside the TransProc repo
 LOCATION ?= test/$(BIN)
 BINDIR := $(CURDIR)/bin
 PYTHON := python3
+
+## Server configs
+SERVER_X86 ?= nettuno
+SERVER_ARM ?= sole
 
 ## QEMU configs
 QEMU_TRANSPROC_X86 ?= /home/ubuntu/TransProc
@@ -27,6 +31,7 @@ RM := rm -rf
 TRACER := $(TRANSPROC)/tools/tracer
 CRIU := $(TRANSPROC)/criu-3.15/criu/criu -vvv --shell-job
 CRIT := $(TRANSPROC)/criu-3.15/crit/crit
+SERVER_TO_QEMU := $(TRANSPROC)/test/server_to_qemu.py --password-file ../pass.txt
 
 all:
 	make -C criu-3.15 -j$(shell nproc)
@@ -65,6 +70,12 @@ get-from-arm: clean-x86
 
 copy-to-x86:
 	scp -P $(QEMU_PORT_X86) -r $(X86_TARGET)/* $(QEMU_USER_X86)@$(QEMU_IP_X86):$(QEMU_TRANSPROC_X86)/$(LOCATION)/
+
+copy-to-qemu-arm: get-from-x86
+	$(PYTHON) $(SERVER_TO_QEMU) $(SERVER_ARM) $(QEMU_PORT_ARM) $(QEMU_TRANSPROC_ARM)/$(LOCATION) $(ARM_TARGET)
+
+copy-to-qemu-x86: get-from-arm
+	$(PYTHON) $(SERVER_TO_QEMU) $(SERVER_X86) $(QEMU_PORT_X86) $(QEMU_TRANSPROC_X86)/$(LOCATION) $(X86_TARGET)
 
 ### The next three take the images without recoding, for debugging purposes
 
