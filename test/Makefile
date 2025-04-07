@@ -87,9 +87,7 @@ clean-arm:
 clean-x86:
 	$(RM) $(X86_TARGET)
 
-clean-img: clean-arm clean-x86
+clean-img:
 	$(RM) *.img
 
-clean:
-	make -C criu-3.15 clean
-	make -C tools clean
+clean: clean-arm clean-x86 clean-img
