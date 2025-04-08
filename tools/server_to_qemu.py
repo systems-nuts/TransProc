@@ -1,5 +1,6 @@
 import paramiko
 import os
+import stat
 import argparse
 
 class TransportCommandExecutor:
@@ -42,14 +43,22 @@ def sftp_upload_dir(sftp, local_dir, remote_dir):
         if os.path.isdir(local_path):  # If it's a directory, recurse
             sftp_upload_dir(sftp, local_path, remote_path)
         else:  # If it's a file, upload
+            # Get original file's permission bits
+            original_mode = os.stat(local_path).st_mode & 0o777  # mask to get just the permission bits
             sftp.put(local_path, remote_path)
+            # Apply the same mode to the remote file
+            sftp.chmod(remote_path, original_mode)
             print(f"Uploaded {local_path} -> {remote_path}")
 
 
 def sftp_upload_file(sftp, local_file, remote_dir):
     """ Upload a file using SFTP. """
     remote_file = os.path.join(remote_dir, os.path.basename(local_file))
+    # Get original file's permission bits
+    original_mode = os.stat(local_file).st_mode & 0o777  # mask to get just the permission bits
     sftp.put(local_file, remote_file)
+    # Apply the same mode to the remote file
+    sftp.chmod(remote_file, original_mode)
     print(f"Uploaded {local_file} -> {remote_file}")
 
 
