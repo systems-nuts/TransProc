@@ -57,7 +57,15 @@ recode-arm:
 restore:
 	sudo $(CRIU) restore -o restore.log
 
-## Targets to get and copy images
+## Targets to get and copy binaries and images
+
+broadcast-bin:
+	cp $(BINDIR)/$(BIN)_$(X86_TARGET) $(BIN)
+	scp -P $(QEMU_PORT_X86) -r $(BINDIR) $(QEMU_USER_X86)@$(QEMU_IP_X86):$(QEMU_TRANSPROC_X86)/$(LOCATION)/
+	scp -P $(QEMU_PORT_X86) $(BIN) $(QEMU_USER_X86)@$(QEMU_IP_X86):$(QEMU_TRANSPROC_X86)/$(LOCATION)/
+	cp $(BINDIR)/$(BIN)_$(ARM_TARGET) $(BIN)
+	$(PYTHON) $(SERVER_TO_QEMU) $(SERVER_ARM) $(QEMU_PORT_ARM) $(QEMU_TRANSPROC_ARM)/$(LOCATION)/bin $(BINDIR)
+	$(PYTHON) $(SERVER_TO_QEMU) $(SERVER_ARM) $(QEMU_PORT_ARM) $(QEMU_TRANSPROC_ARM)/$(LOCATION) $(BIN)
 
 get-from-x86: clean-arm
 	scp -P $(QEMU_PORT_X86) -r $(QEMU_USER_X86)@$(QEMU_IP_X86):$(QEMU_TRANSPROC_X86)/$(LOCATION)/$(ARM_TARGET) .
