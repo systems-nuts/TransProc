@@ -31,7 +31,7 @@ RM := rm -rf
 TRACER := $(TRANSPROC)/tools/tracer
 CRIU := $(TRANSPROC)/criu-3.15/criu/criu -vvv --shell-job
 CRIT := $(TRANSPROC)/criu-3.15/crit/crit
-SERVER_TO_QEMU := $(TRANSPROC)/test/server_to_qemu.py --password-file ../pass.txt
+SERVER_TO_QEMU := $(TRANSPROC)/tools/server_to_qemu.py --password-file $(TRANSPROC)/tools/pass.txt
 
 all:
 	make -C criu-3.15 -j$(shell nproc)
