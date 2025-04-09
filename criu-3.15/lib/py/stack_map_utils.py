@@ -119,7 +119,7 @@ class ArchLiveValue:
     
     def print_val(self):
         string = "    Arch specific location: size %d, in register %d + %d, type: %d, operand type: %d, inst type: %d, operand size: %d, operand reg: %d + %ld" % \
-            (self.size, self.regnum, self.offset, self.type, self.operand_type, self.inst_type,
+            (self.size, self.regnum, self.offset_or_const, self.type, self.operand_type, self.inst_type,
                 self.operand_size, self.operand_regnum, self.operand_offset_or_constant)
         if self.is_ptr:
             string += ", is a pointer"
