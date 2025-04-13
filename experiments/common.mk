@@ -25,9 +25,13 @@ TRANSPROC ?= /home/ubuntu/TransProc
 DEBUG ?= y
 ARM_TARGET := aarch64
 X86_TARGET := x86-64
+ifeq ($(shell uname -p),x86_64)
+  OBJDUMP_FLAGS := -M intel
+endif
 
 ## Tools
 RM := rm -rf
+OBJDUMP := objdump $(OBJDUMP_FLAGS)
 TRACER := $(TRANSPROC)/tools/tracer
 CRIU := $(TRANSPROC)/criu-3.15/criu/criu -vvv --shell-job
 CRIT := $(TRANSPROC)/criu-3.15/crit/crit
@@ -98,7 +102,15 @@ get-from-arm-no-recode: clean-arm
 copy-to-x86-no-recode:
 	scp -P $(QEMU_PORT_X86) -r $(ARM_TARGET)/* $(QEMU_USER_X86)@$(QEMU_IP_X86):$(QEMU_TRANSPROC_X86)/$(LOCATION)/
 
-### Clean targets
+## Debug targets
+
+debug:
+	$(PYTHON) $(CRIT) show core-*.img >core.json
+	$(PYTHON) $(CRIT) elf $(CURDIR) dump_sm $(BINDIR)/$(BIN)_$(ARM_TARGET) >arm_stackmaps.yaml
+	$(PYTHON) $(CRIT) elf $(CURDIR) dump_sm $(BINDIR)/$(BIN)_$(X86_TARGET) >x86_stackmaps.yaml
+	$(OBJDUMP) -d $(BIN) >$(BIN).asm
+
+## Clean targets
 
 clean-arm:
 	$(RM) $(ARM_TARGET)
