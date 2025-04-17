@@ -110,6 +110,28 @@ debug:
 	$(PYTHON) $(CRIT) elf $(CURDIR) dump_sm $(BINDIR)/$(BIN)_$(X86_TARGET) >x86_stackmaps.yaml
 	$(OBJDUMP) -d $(BIN) >$(BIN).asm
 
+## Reduce noise targets
+
+reduce-noise:
+	@echo "Setting CPU scaling governor to performance"
+	echo performance | sudo tee /sys/devices/system/cpu/cpufreq/policy*/scaling_governor
+
+reduce-noise-x86: reduce-noise
+	@echo "Disabling turbo boost"
+	echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
+
+reduce-noise-arm: reduce-noise
+
+reset-reduce-noise:
+	@echo "Setting CPU scaling governor to ondemand"
+	echo ondemand | sudo tee /sys/devices/system/cpu/cpufreq/policy*/scaling_governor
+
+reset-reduce-noise-x86: reset-reduce-noise
+	@echo "Enabling turbo boost"
+	echo 0 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
+
+reset-reduce-noise-arm: reset-reduce-noise
+
 ## Clean targets
 
 clean-arm:
