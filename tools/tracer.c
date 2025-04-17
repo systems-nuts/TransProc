@@ -341,7 +341,7 @@ void remove_trap(pid_t pid, long addr)
     long d;
     d = ptrace(PTRACE_PEEKTEXT, pid, (void *)addr, NULL);
 #ifdef __x86_64__
-    long data = (d & 0xFFFFFF00) | 0x90;
+    long data = (d & 0xFFFFFFFFFFFFFF00) | 0x90;
 #endif
 #ifdef __aarch64__
     long data = (d & 0xFFFFFFFF00000000) | 0xe1a00000;
