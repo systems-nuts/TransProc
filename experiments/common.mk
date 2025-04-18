@@ -47,6 +47,9 @@ vdso:
 
 ## Targets to invoke the process, criu, and crit
 
+spawn:
+	$(RUN_PREPEND) $(CURDIR)/$(BIN) &
+
 trace:
 	sudo $(TRACER) $(shell pidof $(BIN))
 
