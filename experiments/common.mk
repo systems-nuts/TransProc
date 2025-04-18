@@ -30,12 +30,18 @@ ifeq ($(shell uname -p),x86_64)
 endif
 
 ## Tools
+RUN_PREPEND ?= nice -5 taskset -c 0
 RM := rm -rf
 OBJDUMP := objdump $(OBJDUMP_FLAGS)
 TRACER := $(TRANSPROC)/tools/tracer
 CRIU := $(TRANSPROC)/criu-3.15/criu/criu -vvv --shell-job
 CRIT := $(TRANSPROC)/criu-3.15/crit/crit
 SERVER_TO_QEMU := $(TRANSPROC)/tools/server_to_qemu.py --password-file $(TRANSPROC)/tools/pass.txt
+
+## Hyperfine configs
+WARMUP ?= 5
+RUNS ?= 1
+HYPERFINE := hyperfine --warmup $(WARMUP) --runs $(RUNS) --show-output
 
 all:
 	make -C criu-3.15 -j$(shell nproc)
@@ -46,6 +52,9 @@ vdso:
 
 ## Targets to invoke the process, criu, and crit
 
+spawn:
+	$(RUN_PREPEND) $(CURDIR)/$(BIN) &
+
 trace:
 	sudo $(TRACER) $(shell pidof $(BIN))
 
@@ -53,13 +62,13 @@ dump:
 	sudo $(CRIU) dump -o dump.log -t $(shell pidof $(BIN))
 
 recode-x86:
-	$(PYTHON) $(CRIT) recode $(CURDIR) $(CURDIR)/$(ARM_TARGET) $(ARM_TARGET) $(BIN) $(BINDIR) $(DEBUG)
+	$(RUN_PREPEND) $(PYTHON) $(CRIT) recode $(CURDIR) $(CURDIR)/$(ARM_TARGET) $(ARM_TARGET) $(BIN) $(BINDIR) $(DEBUG)
 
 recode-arm:
-	$(PYTHON) $(CRIT) recode $(CURDIR) $(CURDIR)/$(X86_TARGET) $(X86_TARGET) $(BIN) $(BINDIR) $(DEBUG)
+	$(RUN_PREPEND) $(PYTHON) $(CRIT) recode $(CURDIR) $(CURDIR)/$(X86_TARGET) $(X86_TARGET) $(BIN) $(BINDIR) $(DEBUG)
 
 restore:
-	sudo $(CRIU) restore -o restore.log
+	sudo $(RUN_PREPEND) $(CRIU) restore -o restore.log
 
 ## Targets to get and copy binaries and images
 
@@ -109,6 +118,45 @@ debug:
 	$(PYTHON) $(CRIT) elf $(CURDIR) dump_sm $(BINDIR)/$(BIN)_$(ARM_TARGET) >arm_stackmaps.yaml
 	$(PYTHON) $(CRIT) elf $(CURDIR) dump_sm $(BINDIR)/$(BIN)_$(X86_TARGET) >x86_stackmaps.yaml
 	$(OBJDUMP) -d $(BIN) >$(BIN).asm
+
+## Reduce noise targets
+
+reduce-noise:
+	@echo "Setting CPU scaling governor to performance"
+	echo performance | sudo tee /sys/devices/system/cpu/cpufreq/policy*/scaling_governor
+
+reduce-noise-x86: reduce-noise
+	@echo "Disabling turbo boost"
+	echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
+
+reduce-noise-arm: reduce-noise
+
+reset-reduce-noise:
+	@echo "Setting CPU scaling governor to ondemand"
+	echo ondemand | sudo tee /sys/devices/system/cpu/cpufreq/policy*/scaling_governor
+
+reset-reduce-noise-x86: reset-reduce-noise
+	@echo "Enabling turbo boost"
+	echo 0 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
+
+reset-reduce-noise-arm: reset-reduce-noise
+
+## Performance measurement targets
+
+perf-spawn:
+	$(HYPERFINE) '$(RUN_PREPEND) $(CURDIR)/$(BIN)'
+
+perf-recode-x86:
+	$(HYPERFINE) '$(RUN_PREPEND) $(PYTHON) $(CRIT) recode $(CURDIR) $(CURDIR)/$(ARM_TARGET) $(ARM_TARGET) $(BIN) $(BINDIR) $(DEBUG)'
+
+perf-recode-arm:
+	$(HYPERFINE) '$(RUN_PREPEND) $(PYTHON) $(CRIT) recode $(CURDIR) $(CURDIR)/$(X86_TARGET) $(X86_TARGET) $(BIN) $(BINDIR) $(DEBUG)'
+
+### Runs the hyperfine command using `setsid` and `script` to simulate a terminal
+### environment, which is required for CRIU restore, since hyperfine runs in
+### non-interactive mode.
+perf-restore:
+	$(HYPERFINE) 'setsid script -q -c "sudo $(RUN_PREPEND) $(CRIU) restore -o restore.log" /dev/null'
 
 ## Clean targets
 
