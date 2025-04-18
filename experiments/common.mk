@@ -38,6 +38,11 @@ CRIU := $(TRANSPROC)/criu-3.15/criu/criu -vvv --shell-job
 CRIT := $(TRANSPROC)/criu-3.15/crit/crit
 SERVER_TO_QEMU := $(TRANSPROC)/tools/server_to_qemu.py --password-file $(TRANSPROC)/tools/pass.txt
 
+## Hyperfine configs
+WARMUP ?= 5
+RUNS ?= 1
+HYPERFINE := hyperfine --warmup $(WARMUP) --runs $(RUNS) --show-output
+
 all:
 	make -C criu-3.15 -j$(shell nproc)
 	make -C tools
@@ -135,6 +140,23 @@ reset-reduce-noise-x86: reset-reduce-noise
 	echo 0 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
 
 reset-reduce-noise-arm: reset-reduce-noise
+
+## Performance measurement targets
+
+perf-spawn:
+	$(HYPERFINE) '$(RUN_PREPEND) $(CURDIR)/$(BIN)'
+
+perf-recode-x86:
+	$(HYPERFINE) '$(RUN_PREPEND) $(PYTHON) $(CRIT) recode $(CURDIR) $(CURDIR)/$(ARM_TARGET) $(ARM_TARGET) $(BIN) $(BINDIR) $(DEBUG)'
+
+perf-recode-arm:
+	$(HYPERFINE) '$(RUN_PREPEND) $(PYTHON) $(CRIT) recode $(CURDIR) $(CURDIR)/$(X86_TARGET) $(X86_TARGET) $(BIN) $(BINDIR) $(DEBUG)'
+
+### Runs the hyperfine command using `setsid` and `script` to simulate a terminal
+### environment, which is required for CRIU restore, since hyperfine runs in
+### non-interactive mode.
+perf-restore:
+	$(HYPERFINE) 'setsid script -q -c "sudo $(RUN_PREPEND) $(CRIU) restore -o restore.log" /dev/null'
 
 ## Clean targets
 
