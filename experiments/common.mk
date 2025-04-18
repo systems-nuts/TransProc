@@ -30,6 +30,7 @@ ifeq ($(shell uname -p),x86_64)
 endif
 
 ## Tools
+RUN_PREPEND ?= nice -5 taskset -c 0
 RM := rm -rf
 OBJDUMP := objdump $(OBJDUMP_FLAGS)
 TRACER := $(TRANSPROC)/tools/tracer
@@ -53,13 +54,13 @@ dump:
 	sudo $(CRIU) dump -o dump.log -t $(shell pidof $(BIN))
 
 recode-x86:
-	$(PYTHON) $(CRIT) recode $(CURDIR) $(CURDIR)/$(ARM_TARGET) $(ARM_TARGET) $(BIN) $(BINDIR) $(DEBUG)
+	$(RUN_PREPEND) $(PYTHON) $(CRIT) recode $(CURDIR) $(CURDIR)/$(ARM_TARGET) $(ARM_TARGET) $(BIN) $(BINDIR) $(DEBUG)
 
 recode-arm:
-	$(PYTHON) $(CRIT) recode $(CURDIR) $(CURDIR)/$(X86_TARGET) $(X86_TARGET) $(BIN) $(BINDIR) $(DEBUG)
+	$(RUN_PREPEND) $(PYTHON) $(CRIT) recode $(CURDIR) $(CURDIR)/$(X86_TARGET) $(X86_TARGET) $(BIN) $(BINDIR) $(DEBUG)
 
 restore:
-	sudo $(CRIU) restore -o restore.log
+	sudo $(RUN_PREPEND) $(CRIU) restore -o restore.log
 
 ## Targets to get and copy binaries and images
 
