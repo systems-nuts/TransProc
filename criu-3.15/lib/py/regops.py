@@ -13,6 +13,12 @@ def _x86_sp(regset):
 def _x86_bp(regset):
     return regset.rbp
 
+def _x86_csr1(regset):
+    return regset.rbx
+
+def _x86_csr2(regset):
+    return regset.r15
+
 def _x86_pc(regset):
     return regset.rip
 
@@ -24,6 +30,12 @@ def _x86_set_bp(bp, regset):
 
 def _x86_set_pc(pc, regset):
     regset.rip = pc
+
+def _x86_set_csr1(rbx, regset):
+    regset.rbx = rbx
+
+def _x86_set_csr2(r15, regset):
+    regset.r15 = r15
 
 def _x86_get_reg_val(regnum, regset):
     if regnum == reg_x86_64.RAX:
@@ -177,6 +189,12 @@ def _aarch_pc(regset):
 def _aarch_bp(regset):
     return regset.x[29]
 
+def _aarch_csr1(regset):
+    return regset.x[19]
+
+def _aarch_csr2(regset):
+    return regset.x[20]
+
 def _aarch_set_sp(sp, regset):
     regset.sp = sp
 
@@ -186,6 +204,12 @@ def _aarch_set_pc(pc, regset):
 
 def _aarch_set_bp(bp, regset):
     regset.x[29] = bp
+
+def _aarch_set_csr1(x19, regset):
+    regset.x[19] = x19
+
+def _aarch_set_csr2(x20, regset):
+    regset.x[20] = x20
 
 def _aarch64_get_reg_val(regnum, regset):
     if regnum <= 30:
@@ -214,9 +238,13 @@ x86 = {
     'sp' : _x86_sp,
     'bp' : _x86_bp,
     'pc' : _x86_pc,
+    'csr1' : _x86_csr1,
+    'csr2' : _x86_csr2,
     'set_sp' : _x86_set_sp,
     'set_bp' : _x86_set_bp,
     'set_pc' : _x86_set_pc,
+    'set_csr1' : _x86_set_csr1,
+    'set_csr2' : _x86_set_csr2,
     'reg_val' : _x86_get_reg_val,
     'set_reg' : _x86_set_reg_val,
     'bp_regnum' : _x86_bp_regnum
@@ -226,9 +254,13 @@ aarch = {
     'sp' : _aarch_sp,
     'bp' : _aarch_bp,
     'pc' : _aarch_pc,
+    'csr1' : _aarch_csr1,
+    'csr2' : _aarch_csr2,
     'set_sp' : _aarch_set_sp,
     'set_bp' : _aarch_set_bp,
     'set_pc' : _aarch_set_pc,
+    'set_csr1' : _aarch_set_csr1,
+    'set_csr2' : _aarch_set_csr2,
     'reg_val' : _aarch64_get_reg_val,
     'set_reg' : _aarch64_set_reg_val,
     'bp_regnum' : _aarch64_bp_regnum

@@ -36,12 +36,18 @@ OBJDUMP := objdump $(OBJDUMP_FLAGS)
 TRACER := $(TRANSPROC)/tools/tracer
 CRIU := $(TRANSPROC)/criu-3.15/criu/criu -vvv --shell-job
 CRIT := $(TRANSPROC)/criu-3.15/crit/crit
+CRIT_RECODE := $(CRIT) recode
 SERVER_TO_QEMU := $(TRANSPROC)/tools/server_to_qemu.py --password-file $(TRANSPROC)/tools/pass.txt
 
 ## Hyperfine configs
 WARMUP ?= 5
 RUNS ?= 1
 HYPERFINE := hyperfine --warmup $(WARMUP) --runs $(RUNS) --show-output
+
+## crit configs
+ifdef NOTRANSFORM
+  CRIT_RECODE += --no-transform
+endif
 
 all:
 	make -C criu-3.15 -j$(shell nproc)
@@ -62,10 +68,10 @@ dump:
 	sudo $(CRIU) dump -o dump.log -t $(shell pidof $(BIN))
 
 recode-x86:
-	$(RUN_PREPEND) $(PYTHON) $(CRIT) recode $(CURDIR) $(CURDIR)/$(ARM_TARGET) $(ARM_TARGET) $(BIN) $(BINDIR) $(DEBUG)
+	$(RUN_PREPEND) $(PYTHON) $(CRIT_RECODE) $(CURDIR) $(CURDIR)/$(ARM_TARGET) $(ARM_TARGET) $(BIN) $(BINDIR) $(DEBUG)
 
 recode-arm:
-	$(RUN_PREPEND) $(PYTHON) $(CRIT) recode $(CURDIR) $(CURDIR)/$(X86_TARGET) $(X86_TARGET) $(BIN) $(BINDIR) $(DEBUG)
+	$(RUN_PREPEND) $(PYTHON) $(CRIT_RECODE) $(CURDIR) $(CURDIR)/$(X86_TARGET) $(X86_TARGET) $(BIN) $(BINDIR) $(DEBUG)
 
 restore:
 	sudo $(RUN_PREPEND) $(CRIU) restore -o restore.log
@@ -147,10 +153,10 @@ perf-spawn:
 	$(HYPERFINE) '$(RUN_PREPEND) $(CURDIR)/$(BIN)'
 
 perf-recode-x86:
-	$(HYPERFINE) '$(RUN_PREPEND) $(PYTHON) $(CRIT) recode $(CURDIR) $(CURDIR)/$(ARM_TARGET) $(ARM_TARGET) $(BIN) $(BINDIR) $(DEBUG)'
+	$(HYPERFINE) '$(RUN_PREPEND) $(PYTHON) $(CRIT_RECODE) $(CURDIR) $(CURDIR)/$(ARM_TARGET) $(ARM_TARGET) $(BIN) $(BINDIR) $(DEBUG)'
 
 perf-recode-arm:
-	$(HYPERFINE) '$(RUN_PREPEND) $(PYTHON) $(CRIT) recode $(CURDIR) $(CURDIR)/$(X86_TARGET) $(X86_TARGET) $(BIN) $(BINDIR) $(DEBUG)'
+	$(HYPERFINE) '$(RUN_PREPEND) $(PYTHON) $(CRIT_RECODE) $(CURDIR) $(CURDIR)/$(X86_TARGET) $(X86_TARGET) $(BIN) $(BINDIR) $(DEBUG)'
 
 ### Runs the hyperfine command using `setsid` and `script` to simulate a terminal
 ### environment, which is required for CRIU restore, since hyperfine runs in

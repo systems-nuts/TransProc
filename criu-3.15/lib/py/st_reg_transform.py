@@ -10,7 +10,27 @@ from . import definitions
 from . import reg_aarch64
 from . import reg_x86_64
 
-def unwind_and_size(src_rewrite_ctx, dest_rewrite_ctx):
+
+def unwind_and_size(src_rewrite_ctx, dest_rewrite_ctx, transform_needed=True):
+    """
+    Walk the source activation records from the innermost to the outermost and create the destination
+    activation records and get the destination stack size.
+
+    In the loop the dependencies are:
+        * pc -> callsite -> frame size -> sp'
+        * sp/bp -> regset -> frame pop -> bp'/pc'
+    where the accent (`'`) denotes the next outer activation.
+
+    If `transform_needed` is false, it means that there will not be stack transformation (like in the case of Unifico),
+    so we need to copy the source activations verbatim to the destination memory, but when we return from this
+    function we will not perform any transformation on the activations. Also, we need to copy out the innermost
+    activation's callee-saved registers to the respective destination activation.
+
+    :param src_rewrite_ctx:
+    :param dest_rewrite_ctx:
+    :param transform_needed:
+    :return:
+    """
     src_handle = src_rewrite_ctx.st_handle
     dest_handle = dest_rewrite_ctx.st_handle
     dest_stack_size = 0
@@ -40,6 +60,9 @@ def unwind_and_size(src_rewrite_ctx, dest_rewrite_ctx):
             dest_bp += dest_cs.frame_size - src_cs.frame_size
         if act == 0:
             src_act_regset.deep_copy(src_rewrite_ctx.regset)
+            if not transform_needed:
+                # No transformation will be needed, so copy out the innermost activation callee-saved registers.
+                _remap_callee_saved(src_handle, src_act_regset, dest_handle, dest_act_regset)
         src_handle.regops['set_sp'](act_sp, src_act_regset)
         src_handle.regops['set_bp'](src_bp, src_act_regset)
         dest_handle.regops['set_sp'](dest_sp, dest_act_regset)
@@ -62,7 +85,14 @@ def unwind_and_size(src_rewrite_ctx, dest_rewrite_ctx):
             break
     dest_rewrite_ctx.stack_size = dest_stack_size
     dest_rewrite_ctx.pages.seek(dest_rewrite_ctx.stack_top_offset)
-    dest_rewrite_ctx.pages.write(b'\x00' * dest_stack_size)
+    if transform_needed:
+        # Clear and set up the destination memory for the activations
+        dest_rewrite_ctx.pages.write(b'\x00' * dest_stack_size)
+    else:
+        # No transformation will be needed, so just copy verbatim the activations
+        src_rewrite_ctx.pages.seek(src_rewrite_ctx.stack_top_offset)
+        common_stack = src_rewrite_ctx.pages.read(dest_stack_size)
+        dest_rewrite_ctx.pages.write(common_stack)
 
 def _first_frame(call_site):
     return call_site.id == definitions.UINT64_MAX
@@ -462,3 +492,28 @@ def _points_to_stack(ctx, live_val):
             (stack_addr - sp + ctx.stack_top_offset) >= ctx.stack_base_offset:
         stack_addr = None
     return stack_addr
+
+
+def _remap_callee_saved(src_handle, src_act_regset, dest_handle, dest_act_regset):
+    """
+    Do a remapping from the source callee-saved registers to the destination.
+
+    This is in needed in cases like Unifico, where we don't want to do a stack transformation so,
+    in terms of registers, we only need to copy out the innermost activation's callee-saved registers
+    from source to destination. Currently, we assume that migration only happens at function boundaries,
+    so the only live values that won't be in the stack are the CSRs of the innermost frame. Other registers,
+    may have been clobbered after returning from the call, so there is no need to copy them out.
+
+    This function is called only from the innermost activation (activation 0). Currently, we assume only two
+    CSRs, based on the Unifico mapping. Other special registers like the base pointer or the instruction pointer
+    are handled separately in `unwind_and_size`.
+    :param src_handle:
+    :param src_act_regset:
+    :param dest_handle:
+    :param dest_act_regset:
+    :return:
+    """
+    csr1 = src_handle.regops['csr1'](src_act_regset)
+    csr2 = src_handle.regops['csr2'](src_act_regset)
+    dest_handle.regops['set_csr1'](csr1, dest_act_regset)
+    dest_handle.regops['set_csr2'](csr2, dest_act_regset)
