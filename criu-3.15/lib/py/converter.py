@@ -91,7 +91,7 @@ PAGESIZE = 4096
 class Converter():  # TODO: Extend the logic for multiple PIDs
     __metaclass__ = ABCMeta
 
-    def __init__(self, src_dir, dest_dir, src_bin, bin_dir, debug):
+    def __init__(self, src_dir, dest_dir, src_bin, bin_dir, debug, no_transform=False):
         assert os.path.exists(src_dir), "Source directory does not exist"
         assert os.path.exists(
             join(src_dir, src_bin)), "Source binary does not exist"
@@ -101,6 +101,7 @@ class Converter():  # TODO: Extend the logic for multiple PIDs
                               ), "Binary aarch64 copy does not exist"
         self.arch = None
         self.debug = debug
+        self.transform_needed = not no_transform
         self.images = {}
         self.src_dir = src_dir
         self.dest_dir = dest_dir
@@ -654,13 +655,16 @@ class Converter():  # TODO: Extend the logic for multiple PIDs
             self.rewrite_context_init(src_handle, src_regset, dest_handle, dest_regset)
             assert self.dest_rewrite_ctx, 'dest rewrite context not initialized'
             assert self.src_rewrite_ctx, 'src rewrite context not initialized'
-            unwind_and_size(self.src_rewrite_ctx, self.dest_rewrite_ctx)
+            unwind_and_size(self.src_rewrite_ctx, self.dest_rewrite_ctx, self.transform_needed)
             assert len(self.src_rewrite_ctx.activations) == \
                 len(self.dest_rewrite_ctx.activations), "act count unequal for src and dest"
-            for j in range(len(self.dest_rewrite_ctx.activations)):
-                self.src_rewrite_ctx.act = j
-                self.dest_rewrite_ctx.act = j
-                rewrite_frame(self.src_rewrite_ctx, self.dest_rewrite_ctx)
+            if self.transform_needed:
+                for j in range(len(self.dest_rewrite_ctx.activations)):
+                    self.src_rewrite_ctx.act = j
+                    self.dest_rewrite_ctx.act = j
+                    rewrite_frame(self.src_rewrite_ctx, self.dest_rewrite_ctx)
+            else:
+                self.log('Common stack layout: no stack transformation')
             self.dest_rewrite_ctx.pages.close()
             self.dest_rewrite_ctx.regset = self.dest_rewrite_ctx.activations[0].regset
             self.dest_rewrite_ctx.regset.copy_out(dest_core['entries'][0])
@@ -705,8 +709,8 @@ class Converter():  # TODO: Extend the logic for multiple PIDs
 
 #aarch64 to x86-64
 class X8664Converter(Converter):
-    def __init__(self, src_dir, dest_dir, src_bin, bin_dir, debug):
-        Converter.__init__(self, src_dir, dest_dir, src_bin, bin_dir, debug)
+    def __init__(self, src_dir, dest_dir, src_bin, bin_dir, debug, no_transform=False):
+        Converter.__init__(self, src_dir, dest_dir, src_bin, bin_dir, debug, no_transform)
         self.arch = X8664
     
     def assert_conditions(self):  # call before calling recode
@@ -906,8 +910,8 @@ class X8664Converter(Converter):
 
 #x86-64 to aarch64
 class Aarch64Converter(Converter):
-    def __init__(self, src_dir, dest_dir, src_bin, bin_dir, debug):
-        Converter.__init__(self, src_dir, dest_dir, src_bin, bin_dir, debug)
+    def __init__(self, src_dir, dest_dir, src_bin, bin_dir, debug, no_transform=False):
+        Converter.__init__(self, src_dir, dest_dir, src_bin, bin_dir, debug, no_transform)
         self.arch = AARCH64
 
     def assert_conditions(self):  # call before calling recode
