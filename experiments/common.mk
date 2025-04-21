@@ -48,6 +48,10 @@ HYPERFINE := hyperfine --warmup $(WARMUP) --runs $(RUNS) --show-output
 ifdef NOTRANSFORM
   CRIT_RECODE += --no-transform
 endif
+ifdef MEASURE_TRANSFORM
+  CRIT_RECODE += --measure-transform
+endif
+
 
 all:
 	make -C criu-3.15 -j$(shell nproc)

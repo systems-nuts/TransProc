@@ -91,7 +91,7 @@ PAGESIZE = 4096
 class Converter():  # TODO: Extend the logic for multiple PIDs
     __metaclass__ = ABCMeta
 
-    def __init__(self, src_dir, dest_dir, src_bin, bin_dir, debug, no_transform=False):
+    def __init__(self, src_dir, dest_dir, src_bin, bin_dir, debug, no_transform=False, measure_transform=False):
         assert os.path.exists(src_dir), "Source directory does not exist"
         assert os.path.exists(
             join(src_dir, src_bin)), "Source binary does not exist"
@@ -102,6 +102,7 @@ class Converter():  # TODO: Extend the logic for multiple PIDs
         self.arch = None
         self.debug = debug
         self.transform_needed = not no_transform
+        self.measure_transform = measure_transform
         self.images = {}
         self.src_dir = src_dir
         self.dest_dir = dest_dir
@@ -699,18 +700,20 @@ class Converter():  # TODO: Extend the logic for multiple PIDs
         self.transform_inventory_file()
         self.transform_pstree_file()
         self.transform_ttyinfo_file()
-        self.transform_target_mem()
-        self.transform_core_file()
+        if not self.measure_transform:
+            self.transform_target_mem()
+            self.transform_core_file()
         self.transform_files_file()
         self.transform_ids_file()
-        self.transform_stack_and_regs()
+        if not self.measure_transform:
+            self.transform_stack_and_regs()
         self.transform_seccomp_file()
         self.transform_timens_file()
 
 #aarch64 to x86-64
 class X8664Converter(Converter):
-    def __init__(self, src_dir, dest_dir, src_bin, bin_dir, debug, no_transform=False):
-        Converter.__init__(self, src_dir, dest_dir, src_bin, bin_dir, debug, no_transform)
+    def __init__(self, src_dir, dest_dir, src_bin, bin_dir, debug, no_transform=False, measure_transform=False):
+        Converter.__init__(self, src_dir, dest_dir, src_bin, bin_dir, debug, no_transform, measure_transform)
         self.arch = X8664
     
     def assert_conditions(self):  # call before calling recode
@@ -910,8 +913,8 @@ class X8664Converter(Converter):
 
 #x86-64 to aarch64
 class Aarch64Converter(Converter):
-    def __init__(self, src_dir, dest_dir, src_bin, bin_dir, debug, no_transform=False):
-        Converter.__init__(self, src_dir, dest_dir, src_bin, bin_dir, debug, no_transform)
+    def __init__(self, src_dir, dest_dir, src_bin, bin_dir, debug, no_transform=False, measure_transform=False):
+        Converter.__init__(self, src_dir, dest_dir, src_bin, bin_dir, debug, no_transform, measure_transform)
         self.arch = AARCH64
 
     def assert_conditions(self):  # call before calling recode

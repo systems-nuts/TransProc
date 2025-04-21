@@ -541,10 +541,10 @@ def recode(opts):
         debug = True
     if opts['target'] == "aarch64":
         converter = Aarch64Converter(opts['src_dir'], opts['dest_dir'], 
-            opts['src_bin'], opts['bin_dir'], debug, opts['no_transform'])
+            opts['src_bin'], opts['bin_dir'], debug, opts['no_transform'], opts['measure_transform'])
     elif opts['target'] == 'x86-64':
         converter = X8664Converter(opts['src_dir'], opts['dest_dir'], 
-            opts['src_bin'], opts['bin_dir'], debug, opts['no_transform'])
+            opts['src_bin'], opts['bin_dir'], debug, opts['no_transform'], opts['measure_transform'])
     else:
         raise Exception('Architecture not supported')
     converter.assert_conditions()
@@ -814,6 +814,9 @@ def main():
     recode_parser.add_argument('debug', help='run in debug mode(y/n)')
     recode_parser.add_argument('--no-transform', action='store_true',
         help='disable stack transformation')
+    recode_parser.add_argument('--measure-transform', action='store_true',
+                               help='disable transformation of memory pages, stack, and registers, as a form of '
+                                    'ablation study to estimate the impact of transformation on the application state')
     recode_parser.set_defaults(func=recode)
     
     # Examine
