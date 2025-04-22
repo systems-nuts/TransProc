@@ -153,7 +153,7 @@ reset-reduce-noise-arm: reset-reduce-noise
 
 ## Performance measurement targets
 
-perf-spawn:
+perf-spawn: clean
 	$(HYPERFINE) '$(RUN_PREPEND) $(CURDIR)/$(BIN)'
 
 perf-recode-x86:
