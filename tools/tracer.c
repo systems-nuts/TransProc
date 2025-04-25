@@ -332,7 +332,7 @@ void remove_trap(pid_t pid, long addr)
     long data = (d & 0xFFFFFFFFFFFFFF00) | 0x90;
 #endif
 #ifdef __aarch64__
-    long data = (d & 0xFFFFFFFF00000000) | 0xe1a00000;
+    long data = (d & 0xFFFFFFFF00000000) | 0xd503201f;
 #endif
     log_info("Thread %d: placing value 0x%08lx at addr 0x%08lx", pid, data,
              addr);
