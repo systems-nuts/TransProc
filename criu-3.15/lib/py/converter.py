@@ -835,7 +835,7 @@ class X8664Converter(Converter):
             # fpregs
             self.log("WARNING: floating point registers not fully supported")
             dst_info["fpregs"]= {
-                "cwd": 0, "swd": 0, "twd": 0, "fop": 0,
+                "cwd": 0x037f, "swd": 0, "twd": 0, "fop": 0,
                 "rip": 0, "rdp": 0, "mxcsr": 8064, "mxcsr_mask": 65535,
                 "st_space": [ 0, 0, 0, 0, 0, 0, 0, 0,
                             0, 0, 0, 0, 0, 0, 0, 0,
