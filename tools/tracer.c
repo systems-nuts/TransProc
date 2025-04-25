@@ -23,7 +23,7 @@
 #include <elf.h>
 #include <assert.h>
 #include <fcntl.h>
-#include "log.h" 
+#include "log.h"
 
 #define MAX_THREADS 64
 #define MAX_STRING 1024
@@ -60,7 +60,7 @@ int get_thread_ids(pid_t *thread_id, pid_t pid, size_t *entries, size_t max_size
     int tid, e;
     int max_threads;
     char d;
-    
+
     *entries = 0;
     e = 0;
 
@@ -71,12 +71,12 @@ int get_thread_ids(pid_t *thread_id, pid_t pid, size_t *entries, size_t max_size
         return -ENOTSUP;
 
     dir = opendir(dir_name);
-    if (!dir) 
+    if (!dir)
         return -ENOENT;
 
     while(1) {
         entry = readdir(dir);
-        
+
         if(!entry)
             break;
 
@@ -162,26 +162,26 @@ int is_ELF(Elf32_Ehdr eh)
 }
 
 
-int is64Bit(Elf32_Ehdr eh) {                                                    
-    if (eh.e_ident[EI_CLASS] == ELFCLASS64)                                      
-        return 1;                                                             
-    else                                                                                                                                         
-        return 0;                                                            
+int is64Bit(Elf32_Ehdr eh) {
+    if (eh.e_ident[EI_CLASS] == ELFCLASS64)
+        return 1;
+    else
+        return 0;
 }
 
 
 void read_section_header_table64(int32_t fd, Elf64_Ehdr eh, Elf64_Shdr sh_table[])
-{                                                                                
-    uint32_t i;                                                                  
-                                                                                 
-    assert(lseek(fd, (off_t)eh.e_shoff, SEEK_SET) == (off_t)eh.e_shoff);         
-                                                                                 
-    for(i=0; i<eh.e_shnum; i++) {                                                
-        assert(read(fd, (void *)&sh_table[i], eh.e_shentsize)                    
-                == eh.e_shentsize);                                              
-    }                                                                            
-                                                                                                                                                 
-} 
+{
+    uint32_t i;
+
+    assert(lseek(fd, (off_t)eh.e_shoff, SEEK_SET) == (off_t)eh.e_shoff);
+
+    for(i=0; i<eh.e_shnum; i++) {
+        assert(read(fd, (void *)&sh_table[i], eh.e_shentsize)
+                == eh.e_shentsize);
+    }
+
+}
 
 
 char * read_section64(int32_t fd, Elf64_Shdr sh)
@@ -197,7 +197,7 @@ char * read_section64(int32_t fd, Elf64_Shdr sh)
     assert(read(fd, (void *)buff, sh.sh_size) == sh.sh_size);
 
     return buff;
-} 
+}
 
 
 /*
@@ -242,7 +242,7 @@ int get_symbol_addr(const char *bin_path, const char *symbol, \
         log_error("Coult not allocate memory for section header");
     }
 
-    read_section_header_table64(fd, eh64, sh_tbl); 
+    read_section_header_table64(fd, eh64, sh_tbl);
 
     for(i = 0; i < eh64.e_shnum; i++) {
         if((sh_tbl[i].sh_type == SHT_SYMTAB) || \
@@ -262,7 +262,7 @@ int get_symbol_addr(const char *bin_path, const char *symbol, \
             }
         }
     }
-   
+
     return 0;
 }
 
@@ -287,12 +287,12 @@ long get_regs(pid_t cpid, struct user_regs_struct *regs)
     io.iov_base = regs;
     io.iov_len = sizeof(struct user_regs_struct);
     r = ptrace(PTRACE_GETREGSET, cpid, (void *)NT_PRSTATUS, (void *)&io);
-    return r;   
+    return r;
 }
 
 
 /*
- * Uses ptrace to set the register vaues in an architecture 
+ * Uses ptrace to set the register vaues in an architecture
  * independent way.
  *
  * Return: error code returned by ptrace.
@@ -332,7 +332,7 @@ long set_breakpoint(pid_t pid, long addr)
 }
 
 
-/* 
+/*
  * Removes the compiler placed trap and replaces it with a NOP instruction.
  * Implemented for aarch64 and x86-64.
  */
@@ -347,10 +347,10 @@ void remove_trap(pid_t pid, long addr)
     long data = (d & 0xFFFFFFFF00000000) | 0xe1a00000;
 #endif
     log_info("Thread %d: placing value 0x%08lx at addr 0x%08lx", \
-		    pid, data, addr); 
+		    pid, data, addr);
     ptrace(PTRACE_POKETEXT, pid, (void *)addr, (void *)data);
 }
-    
+
 
 /*
  * Removes breakpoint at addr and replaces it with value data.
@@ -383,7 +383,7 @@ void suspend(pid_t pid)
  * This is a method written to be utilized on a per tracee thread basis.
  * Each tracee thread is first waited on to be trapped by the compiler
  * placed breakpoint within the check_migrate function. Once hit, the main
- * thread is used to remove the compiler placed trap from the process 
+ * thread is used to remove the compiler placed trap from the process
  * address space and to restore the __indicator value. Once done, all threads
  * take turns to bring their tracee threads on the return address which also
  * is the migration point. Then the main thread suspends the process in that
@@ -406,9 +406,9 @@ void *trace_thread(void *argp)
     pid = info->pid;
     indicator_addr = info->symbol_addr;
     num_threads = info->num_threads;
-    
+
     if(thread_id == pid){
-        
+
         err = ptrace(PTRACE_ATTACH, pid, NULL, NULL);
         if(err < 0) {
             log_error("PTRACE_ATTACH failed");
@@ -424,7 +424,7 @@ void *trace_thread(void *argp)
 
         data = 1;
 
-        ptrace(PTRACE_POKEDATA, pid, indicator_addr, (void *)data); 
+        ptrace(PTRACE_POKEDATA, pid, indicator_addr, (void *)data);
         log_info("Putting value %ld", data);
 
         data = ptrace(PTRACE_PEEKDATA, pid, indicator_addr, NULL);
@@ -523,12 +523,12 @@ void *trace_thread(void *argp)
         pthread_mutex_unlock(&lock);
     }
     log_info("Thread %d: continuing", thread_id);
-    
+
     waitpid(thread_id, &wait_status, 0);
     log_info("Thread %d: got signal %s", thread_id, \
             strsignal(WSTOPSIG(wait_status)));
 
-    err = get_regs(thread_id, &regs);     
+    err = get_regs(thread_id, &regs);
     if(err < 0) {
         log_error("Thread %d: get regs failed", thread_id);
         pthread_mutex_unlock(&lock);
@@ -576,7 +576,7 @@ void *trace_thread(void *argp)
 }
 
 
-/* 
+/*
  * Uses proc file system to read number of tracee threads and the binary
  * path in the file system. Parses symbol table to get __indicator address.
  * Changes the __indicator value to indicate migration to the binary and then
@@ -589,7 +589,7 @@ int main(int argc, char **argv)
     ssize_t ret;
     pid_t thread_id[MAX_THREADS];
     char bin_path[MAX_STRING];
-    struct symbol_addresses sa; 
+    struct symbol_addresses sa;
     long data, r;
     struct tracee_info info[MAX_THREADS];
     pid_t pid;
@@ -614,14 +614,14 @@ int main(int argc, char **argv)
     ret = get_binary_path(pid, bin_path, MAX_STRING);
     log_info("Binary path found: %s", bin_path);
 
-    
+
     err  = get_symbol_addr(bin_path, INDICATOR, CHECK_MIGRATE, &sa);
     if(err < 0) {
         log_error("Error finding symbol %s address", INDICATOR);
         return -1;
     }
     else {
-        log_info("Symbol %s address: 0x%08lx", INDICATOR, sa.indicator_addr); 
+        log_info("Symbol %s address: 0x%08lx", INDICATOR, sa.indicator_addr);
         log_info("Symbol %s address: 0x%08lx", CHECK_MIGRATE, sa.check_migrate_addr);
     }
 
