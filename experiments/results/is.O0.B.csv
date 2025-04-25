@@ -1,0 +1,7 @@
+Phase,Iterations,IS.x86.O0.B(s),IS.arm.O0.B(s),IS.Popcorn.O0.B(s),IS.Unifico.O0.B(s)
+x86,init + 1--4,,,11.79,11.54
+recode,-,,,0.88,0.44
+arm,5--8,,,3.8,3.59
+recode,-,,,1,0.43
+x86,9--10,,,1.15,1.06
+total,,14.11,27.73,16.47,15.57
