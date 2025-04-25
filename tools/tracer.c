@@ -463,7 +463,6 @@ void *trace_thread(void *argp)
     log_info("Thread %d: x[30] = 0x%08llx", thread_id, regs.regs[30]);
     ret_addr = regs.regs[30];
     brk_addr = regs.pc;
-    regs.pc -= 4;
 #endif
 
     /* main thread only. Remove compiler placed trap, restore indicator val*/
