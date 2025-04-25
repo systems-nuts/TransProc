@@ -1,5 +1,0 @@
-Phase,Iterations,IS.x86.O0.A(s),IS.arm.O0.A(s),IS.Popcorn.O0.A(s),IS.Unifico.O0.A(s)
-x86,init + 1--5,,,2.93,2.88
-recode,--,,,0.62,0.45
-arm,6--10,,,1.40,1.41
-total,,3.62,7.30,4.95,4.74
