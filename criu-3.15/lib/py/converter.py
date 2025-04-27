@@ -567,7 +567,10 @@ class Converter():  # TODO: Extend the logic for multiple PIDs
         vma['end'] = hex(text_end)
         vma['pgoff'] = pg_off
 
-        shutil.copyfile(self.src_image_file_paths[PAGES], self.dest_image_file_paths[PAGES])
+        if self.transform_needed:
+            shutil.copyfile(self.src_image_file_paths[PAGES], self.dest_image_file_paths[PAGES])
+        else:
+            shutil.move(self.src_image_file_paths[PAGES], self.dest_image_file_paths[PAGES])
         orig_size = os.stat(self.dest_image_file_paths[PAGES]).st_size
         dest_pages = open(self.dest_image_file_paths[PAGES], 'r+b')
 
@@ -676,8 +679,12 @@ class Converter():  # TODO: Extend the logic for multiple PIDs
         dest_sp = src_sp
         src_pm = self.src_image_file_paths[PAGEMAP]
         dest_pm = self.dest_image_file_paths[PAGEMAP]
-        src_pages = open(self.src_image_file_paths[PAGES], 'rb')
-        dest_pages = open(self.dest_image_file_paths[PAGES], 'r+b')
+        if self.transform_needed:
+            src_pages = open(self.src_image_file_paths[PAGES], 'rb')
+            dest_pages = open(self.dest_image_file_paths[PAGES], 'r+b')
+        else:
+            src_pages = open(self.dest_image_file_paths[PAGES], 'r+b')
+            dest_pages = src_pages
         (src_st_top_offset, src_st_base_offset) = \
             self.get_stack_page_offset(src_pm, src_sp)
         (dest_st_top_offset, dest_st_base_offset) = \
