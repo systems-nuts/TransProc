@@ -1,6 +1,7 @@
 import paramiko
 import os
 import argparse
+import stat
 
 FIRST_SERVER_USER = "nikos"
 SECOND_SERVER = "127.0.0.1"
@@ -17,8 +18,10 @@ class TransportWrapper:
     A wrapper around a paramiko.Transport object to handle SSH connections from a local server, to a remote server, using an intermediate server as a jump host.
     """
 
-    def __init__(self, first_server, second_server_port, password):
+    def __init__(self, first_server, second_server_port, password, download=False):
         log("Initializing...")
+        self.download = download
+
         # Connect to the first server
         ssh1 = paramiko.SSHClient()
         ssh1.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -55,8 +58,14 @@ class TransportWrapper:
             log(
                 f"Running with remote path: {remote_file_path} and local path: {local_file_path}"
             )
+            if self.download:
+                # Download the directory from the remote server
+                sftp_download_dir(self.sftp, remote_file_path, local_file_path)
+                log(
+                    f"Directory {remote_file_path} downloaded successfully to {local_file_path}"
+                )
             # Perform the recursive upload
-            if os.path.isfile(local_file_path):
+            elif os.path.isfile(local_file_path):
                 # If it's a file, upload it directly
                 sftp_upload_file(self.sftp, local_file_path, remote_file_path)
             elif os.path.isdir(local_file_path):
@@ -74,6 +83,12 @@ class TransportWrapper:
 
         except Exception as e:
             print(f"Transfer error: {e}")
+
+    def exec(self, command):
+        """
+        Execute a command on the second server.
+        """
+        self.executor.exec(command)
 
     def close(self):
         """Close the SFTP session and transport."""
@@ -147,6 +162,22 @@ def sftp_upload_file(sftp, local_file, remote_dir):
     log(f"Uploaded {local_file} -> {remote_file}")
 
 
+# Helper to download a directory recursively
+def sftp_download_dir(sftp, remote_dir, local_dir):
+    """Recursively download a directory from the remote server."""
+    os.makedirs(local_dir, exist_ok=True)
+
+    for entry in sftp.listdir_attr(remote_dir):
+        remote_path = remote_dir + "/" + entry.filename
+        local_path = os.path.join(local_dir, entry.filename)
+
+        if stat.S_ISDIR(entry.st_mode):
+            sftp_download_dir(sftp, remote_path, local_path)
+        else:
+            sftp.get(remote_path, local_path)
+            print(f"Downloaded {remote_path} -> {local_path}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Transfer directory to a nested remote server over SSH."
@@ -168,10 +199,20 @@ if __name__ == "__main__":
         "local_file_path", type=str, help="Local directory path to upload"
     )
     parser.add_argument(
+        "--download",
+        action="store_true",
+        help="Download the remote directory to the local path",
+    )
+    parser.add_argument(
         "--password-file",
         type=str,
         default="pass.txt",
         help="Path to file containing password",
+    )
+    parser.add_argument(
+        "--command",
+        type=str,
+        help="Command to be executed on the remote server",
     )
 
     args = parser.parse_args()
@@ -184,7 +225,10 @@ if __name__ == "__main__":
         exit(1)
 
     transport_wrapper = TransportWrapper(
-        args.first_server, args.second_server_port, password
+        args.first_server, args.second_server_port, password, args.download
     )
-    transport_wrapper.run(args.remote_file_path, args.local_file_path)
-    transport_wrapper.close()
+    if args.command:
+        transport_wrapper.exec(args.command)
+    else:
+        transport_wrapper.run(args.remote_file_path, args.local_file_path)
+        transport_wrapper.close()
