@@ -4,11 +4,26 @@ abapat28@vt.edu
 """
 
 import struct
-import os
 
 from . import definitions
 from . import reg_aarch64
 from . import reg_x86_64
+
+
+def xxd_format(data, width=16):
+    lines = []
+    for i in range(0, len(data), width):
+        chunk = data[i : i + width]
+        hex_pairs = []
+        for j in range(0, len(chunk), 2):
+            pair = chunk[j : j + 2]
+            hex_pair = "".join(f"{b:02x}" for b in pair)
+            hex_pairs.append(hex_pair)
+
+        hex_part = " ".join(hex_pairs).ljust(width * 2 + width // 2 - 1)
+        ascii_part = "".join(chr(b) if 32 <= b <= 126 else "." for b in chunk)
+        lines.append(f"{i:08x}: {hex_part}  {ascii_part}")
+    return "\n".join(lines)
 
 
 def unwind_and_size(src_rewrite_ctx, dest_rewrite_ctx, transform_needed=True):
@@ -92,10 +107,14 @@ def unwind_and_size(src_rewrite_ctx, dest_rewrite_ctx, transform_needed=True):
         # No transformation will be needed, so just copy verbatim the activations
         src_rewrite_ctx.pages.seek(src_rewrite_ctx.stack_top_offset)
         common_stack = src_rewrite_ctx.pages.read(dest_stack_size)
+        with open("stack.hex", "w") as f:
+            f.write(xxd_format(common_stack))
         dest_rewrite_ctx.pages.write(common_stack)
+
 
 def _first_frame(call_site):
     return call_site.id == definitions.UINT64_MAX
+
 
 def _pop_frame(ctx, sp, bp):
     offset = ctx.stack_top_offset + (bp - sp)
@@ -103,6 +122,7 @@ def _pop_frame(ctx, sp, bp):
     bp = struct.unpack('<Q', ctx.pages.read(8))[0]
     pc = struct.unpack('<Q', ctx.pages.read(8))[0]
     return (bp, pc)
+
 
 def rewrite_frame(src_ctx, dest_ctx):
     src_cs = src_ctx.activations[src_ctx.act].call_site
