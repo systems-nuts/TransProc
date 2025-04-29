@@ -1,0 +1,41 @@
+Phase,Iterations,CG.Full.X86.O0.B,CG.Full.AArch64.O0.B,CG.Popcorn.O0.B,CG.Unifico.O0.B
+X86 Partial Execution,init + 1--4,,,25.79,22.51
+X86 Transformation,-,,,0.79,0.61
+AArch64 Partial Execution,5--8,,,16.22,16.7
+AArch64 Transformation,-,,,0.88,0.53
+X86 Partial Execution,9--12,,,8.49,8.88
+X86 Transformation,-,,,0.79,0.61
+AArch64 Partial Execution,13--16,,,16.41,16.53
+AArch64 Transformation,-,,,0.88,0.53
+X86 Partial Execution,17--20,,,8.51,8.64
+X86 Transformation,-,,,0.79,0.61
+AArch64 Partial Execution,21--24,,,16.74,16.74
+AArch64 Transformation,-,,,0.88,0.53
+X86 Partial Execution,25--28,,,8.42,8.41
+X86 Transformation,-,,,0.79,0.61
+AArch64 Partial Execution,29--32,,,16.22,16.46
+AArch64 Transformation,-,,,0.88,0.53
+X86 Partial Execution,33--36,,,8.41,8.4
+X86 Transformation,-,,,0.79,0.61
+AArch64 Partial Execution,37--40,,,16.36,16.39
+AArch64 Transformation,-,,,0.88,0.53
+X86 Partial Execution,41--44,,,8.43,8.4
+X86 Transformation,-,,,0.79,0.61
+AArch64 Partial Execution,45--48,,,16.63,16.48
+AArch64 Transformation,-,,,0.88,0.53
+X86 Partial Execution,49--52,,,8.43,8.4
+X86 Transformation,-,,,0.79,0.61
+AArch64 Partial Execution,53--56,,,16.59,16.36
+AArch64 Transformation,-,,,0.88,0.53
+X86 Partial Execution,57--60,,,8.44,8.4
+X86 Transformation,-,,,0.79,0.61
+AArch64 Partial Execution,61--64,,,16.44,16.48
+AArch64 Transformation,-,,,0.88,0.53
+X86 Partial Execution,65--68,,,8.47,8.4
+X86 Transformation,-,,,0.79,0.61
+AArch64 Partial Execution,69--72,,,16.3,16.41
+AArch64 Transformation,-,,,0.88,0.53
+X86 Partial Execution,73--76,,,6.32,6.33
+X86 Full Execution,,233.58,,,
+AArch64 Full Execution,,,337.16,,
+total,,233.58,337.16,262.65,255.58

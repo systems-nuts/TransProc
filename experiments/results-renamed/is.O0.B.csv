@@ -1,0 +1,9 @@
+Phase,Iterations,IS.Full.X86.O0.B,IS.Full.AArch64.O0.B,IS.Popcorn.O0.B,IS.Unifico.O0.B
+X86 Partial Execution,init + 1--4,,,11.79,11.54
+X86 Transformation,-,,,0.88,0.59
+AArch64 Partial Execution,5--8,,,3.8,3.59
+AArch64 Transformation,-,,,0.96,0.53
+X86 Partial Execution,9--10,,,1.15,1.06
+X86 Full Execution,,14.11,,,
+AArch64 Full Execution,,,27.73,,
+total,,14.11,27.73,16.47,15.72
