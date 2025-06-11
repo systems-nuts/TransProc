@@ -157,10 +157,10 @@ perf-spawn: clean
 	$(HYPERFINE) '$(RUN_PREPEND) $(CURDIR)/$(BIN)'
 
 perf-recode-x86:
-	$(HYPERFINE) --prepare 'cp pages-1.backup pages-1.img' '$(RUN_PREPEND) $(PYTHON) $(CRIT_RECODE) $(CURDIR) $(CURDIR)/$(ARM_TARGET) $(ARM_TARGET) $(BIN) $(BINDIR) $(DEBUG)'
+	$(HYPERFINE) --setup 'cp pages-1.img pages-1.backup' --prepare 'cp pages-1.backup pages-1.img' '$(RUN_PREPEND) $(PYTHON) $(CRIT_RECODE) $(CURDIR) $(CURDIR)/$(ARM_TARGET) $(ARM_TARGET) $(BIN) $(BINDIR) $(DEBUG)'
 
 perf-recode-arm:
-	$(HYPERFINE) --prepare 'cp pages-1.backup pages-1.img' '$(RUN_PREPEND) $(PYTHON) $(CRIT_RECODE) $(CURDIR) $(CURDIR)/$(X86_TARGET) $(X86_TARGET) $(BIN) $(BINDIR) $(DEBUG)'
+	$(HYPERFINE) --setup 'cp pages-1.img pages-1.backup' --prepare 'cp pages-1.backup pages-1.img' '$(RUN_PREPEND) $(PYTHON) $(CRIT_RECODE) $(CURDIR) $(CURDIR)/$(X86_TARGET) $(X86_TARGET) $(BIN) $(BINDIR) $(DEBUG)'
 
 trip-x86-init:
 	# Go to the x86 QEMU instance and restore, run until a migration point, dump, and recode.
