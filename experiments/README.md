@@ -25,11 +25,11 @@ After cloning, see `magnifico/benchmarks/npb-unifico/README.md` for build instru
 The `NOTRANSFORM` flag should be set for the Unifico version, otherwise unset.
 
 ```bash
-# Depending on the machine you are on
-make reduce-noise-{x86,arm}
-
 # Go to the experiment directory
 cd <npb>.{unifico,popcorn}.<flag>.<class>
+
+# Depending on the machine you are on
+make reduce-noise-{x86,arm}
 
 # Single migration and back
 make trip-x86-init NOTRANSFORM=
