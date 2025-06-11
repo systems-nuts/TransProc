@@ -178,7 +178,7 @@ trip-x86-finalize:
 trip-arm: clean copy-to-qemu-arm
 	# Go to the arm QEMU instance and restore, run until a migration point, dump, and recode.
 	$(PYTHON) $(SERVER_TO_QEMU) $(SERVER_ARM) $(QEMU_PORT_ARM) $(QEMU_TRANSPROC_ARM)/$(LOCATION) $(BIN) \
-		--command "cd $(QEMU_TRANSPROC_X86)/$(LOCATION); make safe-restore & ; sleep 0.5; make trace; make dump; make recode-arm NOTRANSFORM=$(NOTRANSFORM)"
+		--command "cd $(QEMU_TRANSPROC_X86)/$(LOCATION); make safe-restore & ; sleep 1; make trace; make dump; make recode-arm NOTRANSFORM=$(NOTRANSFORM)"
 	# Get the recoded arm->x86 images
 	$(PYTHON) $(SERVER_TO_QEMU) $(SERVER_ARM) $(QEMU_PORT_ARM) $(QEMU_TRANSPROC_ARM)/$(LOCATION)/$(X86_TARGET) $(X86_TARGET) --download
 	# Clean up the previous images from the x86 QEMU instance
@@ -187,7 +187,7 @@ trip-arm: clean copy-to-qemu-arm
 	scp -P $(QEMU_PORT_X86) -r $(X86_TARGET)/* $(QEMU_USER_X86)@$(QEMU_IP_X86):$(QEMU_TRANSPROC_X86)/$(LOCATION)/
 
 perf-trip-arm:
-	ssh $(QEMU_USER_X86)@127.0.0.1 -p 5556 "cd ~/TransProc/experiments/is.popcorn.O0.A; make safe-restore & ; sleep 0.5; make trace; make dump; make recode-arm"
+	ssh $(QEMU_USER_X86)@127.0.0.1 -p 5556 "cd ~/TransProc/experiments/is.popcorn.O0.A; make safe-restore & ; sleep 1; make trace; make dump; make recode-arm"
 
 ### The following use `setsid` and `script` to simulate a terminal,
 ### which is required for CRIU restore, since hyperfine runs in non-interactive mode.
