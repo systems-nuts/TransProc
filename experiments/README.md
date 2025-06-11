@@ -1,5 +1,25 @@
 # Magnifico Experiments
 
+## Compiler and Migration Library used
+
+The migration library used can be found [here](https://github.com/systems-nuts/popcorn-compiler/tree/magnifico).
+This needs to be installed, for example in `usr/local/popcorn`, as per the popcorn-kernel [wiki](https://github.com/ssrg-vt/popcorn-kernel/wiki/Compiler-Setup).
+
+The compiler is either the Popcorn compiler or the Unifico compiler, depending on the experiment (decided from inside the repos in the following instructions).
+
+## Compile the benchmarks
+
+### Popcorn
+
+The popcorn benchmarks are hosted [here](https://github.com/systems-nuts/popcorn-benchmark/tree/nikos/taco-migration-experiment).
+After cloning, see the `popcorn-benchmark/heterogeneous_test_suits/NPB3.3-SER-C-FLAT-popcorn-explicit/README.md` for instructions on how to compile the benchmarks.
+
+### Unifico
+
+The unifico benchmarks are hosted [here](https://github.com/systems-nuts/magnifico/tree/nikos/taco-migration-experiment).
+After cloning, see `magnifico/benchmarks/npb-unifico/README.md` for build instructions.
+
+
 ## Steps
 
 The `NOTRANSFORM` flag should be set for the Unifico version, otherwise unset.
