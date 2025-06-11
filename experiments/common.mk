@@ -165,7 +165,7 @@ perf-recode-arm:
 trip-x86-init:
 	# Go to the x86 QEMU instance and restore, run until a migration point, dump, and recode.
 	# Uses the `-t` option to create a new TTY for the SSH session.
-	ssh -t ubuntu@127.0.0.1 -p 5555 'cd $(QEMU_TRANSPROC_X86)/$(LOCATION); make clean; ./$(BIN) & ; make trace; make dump; sudo chown ubuntu *.img;  make recode-x86 NOTRANSFORM=$(NOTRANSFORM)'
+	ssh -t $(QEMU_USER_X86)@127.0.0.1 -p 5555 'cd $(QEMU_TRANSPROC_X86)/$(LOCATION); make clean; ./$(BIN) & ; make trace; make dump; sudo chown $(QEMU_USER_X86) *.img;  make recode-x86 NOTRANSFORM=$(NOTRANSFORM)'
 
 trip-x86-continue:
 	# Go to the x86 QEMU instance and restore, run until a migration point, dump, and recode, so that a new cycle can continue.
@@ -187,7 +187,7 @@ trip-arm: clean copy-to-qemu-arm
 	scp -P $(QEMU_PORT_X86) -r $(X86_TARGET)/* $(QEMU_USER_X86)@$(QEMU_IP_X86):$(QEMU_TRANSPROC_X86)/$(LOCATION)/
 
 perf-trip-arm:
-	ssh ubuntu@127.0.0.1 -p 5556 "cd ~/TransProc/experiments/is.popcorn.O0.A; make safe-restore & ; sleep 0.5; make trace; make dump; make recode-arm"
+	ssh $(QEMU_USER_X86)@127.0.0.1 -p 5556 "cd ~/TransProc/experiments/is.popcorn.O0.A; make safe-restore & ; sleep 0.5; make trace; make dump; make recode-arm"
 
 ### The following use `setsid` and `script` to simulate a terminal,
 ### which is required for CRIU restore, since hyperfine runs in non-interactive mode.
