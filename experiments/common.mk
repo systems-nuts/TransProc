@@ -165,7 +165,7 @@ perf-recode-arm:
 trip-x86-init:
 	# Go to the x86 QEMU instance and restore, run until a migration point, dump, and recode.
 	# Uses the `-t` option to create a new TTY for the SSH session.
-	ssh -t ubuntu@127.0.0.1 -p 5555 'cd $(QEMU_TRANSPROC_X86)/$(LOCATION); make clean; ./$(BIN) & ; make trace; make dump; make recode-x86 NOTRANSFORM=$(NOTRANSFORM)'
+	ssh -t ubuntu@127.0.0.1 -p 5555 'cd $(QEMU_TRANSPROC_X86)/$(LOCATION); make clean; ./$(BIN) & ; make trace; make dump; sudo chown ubuntu *.img;  make recode-x86 NOTRANSFORM=$(NOTRANSFORM)'
 
 trip-x86-continue:
 	# Go to the x86 QEMU instance and restore, run until a migration point, dump, and recode, so that a new cycle can continue.
