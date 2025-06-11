@@ -165,11 +165,11 @@ perf-recode-arm:
 trip-x86-init:
 	# Go to the x86 QEMU instance and restore, run until a migration point, dump, and recode.
 	# Uses the `-t` option to create a new TTY for the SSH session.
-	ssh -t ubuntu@127.0.0.1 -p 5555 'cd $(QEMU_TRANSPROC_X86)/$(LOCATION); make clean; ./$(BIN) & ; make trace; make dump; make recode-x86 $(NOTRANSFORM)'
+	ssh -t $(QEMU_USER_X86)@127.0.0.1 -p 5555 'cd $(QEMU_TRANSPROC_X86)/$(LOCATION); make clean; ./$(BIN) & ; make trace; make dump; sudo chown $(QEMU_USER_X86) *.img;  make recode-x86 NOTRANSFORM=$(NOTRANSFORM)'
 
 trip-x86-continue:
 	# Go to the x86 QEMU instance and restore, run until a migration point, dump, and recode, so that a new cycle can continue.
-	ssh $(QEMU_USER_X86)@$(QEMU_IP_X86) -p $(QEMU_PORT_X86) 'cd $(QEMU_TRANSPROC_X86)/$(LOCATION); make safe-restore &; sleep 1; sudo kill -CONT $$(pidof $(BIN)); make trace; make dump; make recode-x86 $(NOTRANSFORM)'
+	ssh $(QEMU_USER_X86)@$(QEMU_IP_X86) -p $(QEMU_PORT_X86) 'cd $(QEMU_TRANSPROC_X86)/$(LOCATION); make safe-restore &; sleep 1; sudo kill -CONT $$(pidof $(BIN)); make trace; make dump; make recode-x86 NOTRANSFORM=$(NOTRANSFORM)'
 
 trip-x86-finalize:
 	# Go to the x86 QEMU instance and restore.
@@ -178,7 +178,7 @@ trip-x86-finalize:
 trip-arm: clean copy-to-qemu-arm
 	# Go to the arm QEMU instance and restore, run until a migration point, dump, and recode.
 	$(PYTHON) $(SERVER_TO_QEMU) $(SERVER_ARM) $(QEMU_PORT_ARM) $(QEMU_TRANSPROC_ARM)/$(LOCATION) $(BIN) \
-		--command "cd $(QEMU_TRANSPROC_X86)/$(LOCATION); make safe-restore & ; sleep 0.5; make trace; make dump; make recode-arm $(NOTRANSFORM)"
+		--command "cd $(QEMU_TRANSPROC_X86)/$(LOCATION); make safe-restore & ; sleep 1; make trace; make dump; make recode-arm NOTRANSFORM=$(NOTRANSFORM)"
 	# Get the recoded arm->x86 images
 	$(PYTHON) $(SERVER_TO_QEMU) $(SERVER_ARM) $(QEMU_PORT_ARM) $(QEMU_TRANSPROC_ARM)/$(LOCATION)/$(X86_TARGET) $(X86_TARGET) --download
 	# Clean up the previous images from the x86 QEMU instance
@@ -187,7 +187,7 @@ trip-arm: clean copy-to-qemu-arm
 	scp -P $(QEMU_PORT_X86) -r $(X86_TARGET)/* $(QEMU_USER_X86)@$(QEMU_IP_X86):$(QEMU_TRANSPROC_X86)/$(LOCATION)/
 
 perf-trip-arm:
-	ssh ubuntu@127.0.0.1 -p 5556 "cd ~/TransProc/experiments/is.popcorn.O0.A; make safe-restore & ; sleep 0.5; make trace; make dump; make recode-arm"
+	ssh $(QEMU_USER_X86)@127.0.0.1 -p 5556 "cd ~/TransProc/experiments/is.popcorn.O0.A; make safe-restore & ; sleep 1; make trace; make dump; make recode-arm"
 
 ### The following use `setsid` and `script` to simulate a terminal,
 ### which is required for CRIU restore, since hyperfine runs in non-interactive mode.
